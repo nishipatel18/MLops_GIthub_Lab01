@@ -1,0 +1,38 @@
+name: Lab2 Model Calibration
+
+on:
+  workflow_run:
+    workflows: ["Lab2 Model Training"]
+    types:
+      - completed
+
+jobs:
+  calibrate:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r lab2/requirements.txt
+      
+      - name: Calibrate model
+        run: |
+          cd lab2
+          python src/calibrate_model.py
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add lab2/models/
+          git commit -m "Added calibrated model" || echo "No changes"
+          git push
